@@ -18,16 +18,16 @@ import me.chocolf.moneyfrommobs.managers.MobManager;
 import me.chocolf.moneyfrommobs.managers.PickUpManager;
 import me.chocolf.moneyfrommobs.utils.RandomNumberUtils;
 
-public class DeathListeners implements Listener{
-	
+public class DeathListeners implements Listener {
+
 	private final MoneyFromMobs plugin;
-	
+
 	public DeathListeners(MoneyFromMobs plugin) {
 		this.plugin = plugin;
-		
+
 		Bukkit.getPluginManager().registerEvents(this, plugin);
-	}	
-	
+	}
+
 	@EventHandler
 	public void onEntityDeath(EntityDeathEvent e) {
 		LivingEntity entity = e.getEntity();
@@ -45,25 +45,24 @@ public class DeathListeners implements Listener{
 		// checks if money can be dropped
 		if (!dropsManager.canDropMoneyHere(entity, entityName, killer))
 			return;
-		
+
 		if (entityName.equals("PLAYER")) {
 			if (entity.hasPermission("MoneyFromMobs.PreventMoneyDropOnDeath"))
 				return;
 			amount = mobManager.getPlayerAmount(entity);
-			amount -= multipliersManager.applyPlayerDeathMultipliers(amount,(Player) entity);
-		}
-		else {
+			amount -= multipliersManager.applyPlayerDeathMultipliers(amount, (Player) entity);
+		} else {
 			amount = multipliersManager.applyMultipliers(mobManager.getAmount(entityName), killer, entity);
 		}
 		double dropChance = mobManager.getDropChance(entityName);
 		int numberOfDrops = mobManager.getNumberOfDrops(entityName);
-		
+
 		// calls attempt to drop money event
 		AttemptToDropMoneyEvent attemptToDropMoneyEvent = new AttemptToDropMoneyEvent(dropChance, entity, killer);
 		Bukkit.getPluginManager().callEvent(attemptToDropMoneyEvent);
 		if (attemptToDropMoneyEvent.isCancelled()) return;
 		dropChance = attemptToDropMoneyEvent.getDropChance();
-		
+
 		// makes random number and compares it to drop chance
 		double randomNum = RandomNumberUtils.doubleRandomNumber(0.0, 100.0);
 		if (randomNum > dropChance) return;
@@ -77,15 +76,15 @@ public class DeathListeners implements Listener{
 		}
 
 		PickUpManager pickUpManager = plugin.getPickUpManager();
-		
+
 		// if money should be dropped as item
-		if ( dropsManager.doesMoneyDropOnGround() && amount > 0){
-			if (!(entity instanceof Player && !dropsManager.shouldKillerEarnMoney())){
+		if (dropsManager.doesMoneyDropOnGround() && amount > 0) {
+			if (!(entity instanceof Player && !dropsManager.shouldKillerEarnMoney())) {
 				ItemStack itemToDrop = pickUpManager.getItemToDrop();
 				Location location = entity.getLocation();
 
 				// calls drop money event
-				DropMoneyEvent dropMoneyEvent = new DropMoneyEvent(itemToDrop,amount, location, killer, entity, numberOfDrops);
+				DropMoneyEvent dropMoneyEvent = new DropMoneyEvent(itemToDrop, amount, location, killer, entity, numberOfDrops);
 				Bukkit.getPluginManager().callEvent(dropMoneyEvent);
 				if (dropMoneyEvent.isCancelled())
 					return;
@@ -100,18 +99,15 @@ public class DeathListeners implements Listener{
 
 		}
 		// if money goes straight into players account
-		else if (killer!=null){
+		else if (killer != null) {
 			if (!(entity instanceof Player && !dropsManager.shouldKillerEarnMoney()))
 				pickUpManager.giveMoney(amount, killer);
 		}
 
 		// take money from dead player
-		if (amount!=0 && entityName.equals("PLAYER") && dropsManager.shouldTakeMoneyFromKilledPlayer()) {
+		if (amount != 0 && entityName.equals("PLAYER") && dropsManager.shouldTakeMoneyFromKilledPlayer()) {
 			plugin.getEcon().withdrawPlayer((Player) entity, amount);
 			plugin.getMessageManager().sendPlayerMessage(amount, (Player) entity);
 		}
-	}	
+	}
 }
-
-
-

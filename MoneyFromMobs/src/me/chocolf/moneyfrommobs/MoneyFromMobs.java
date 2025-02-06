@@ -63,6 +63,7 @@ public class MoneyFromMobs extends JavaPlugin{
 		new PickUpListeners(this);
 		new DeathListeners(this);
 		new MobSpawnListener(this);
+		new MobDeathListener(this);
 		new OnJoinListener(this);
 		new HopperListeners(this);
 		if (VersionUtils.getVersionNumber() > 13)
